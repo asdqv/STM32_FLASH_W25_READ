@@ -1,0 +1,6 @@
+../Core/Src/w25q_spi.c:39:6:SPI1_Send	16	static
+../Core/Src/w25q_spi.c:42:6:SPI1_Recv	16	static
+../Core/Src/w25q_spi.c:45:6:w25_Reset	8	static
+../Core/Src/w25q_spi.c:53:6:w25_Read_Data	24	static
+../Core/Src/w25q_spi.c:62:10:w25_Read_ID	16	static
+../Core/Src/w25q_spi.c:71:6:w25_Init	16	static
