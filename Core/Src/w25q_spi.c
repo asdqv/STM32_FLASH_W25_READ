@@ -17,6 +17,8 @@
 extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 
+static void delay_ms(uint16_t delay);
+
 typedef struct
 {
   uint16_t  PageSize;
@@ -33,6 +35,8 @@ typedef struct
 
 w25_info_t  w25_info;
 
+uint32_t time = 0; //delay ms
+uint8_t timeFlag = 0;
 char str[130];
 uint8_t buf[10];
 
@@ -70,9 +74,9 @@ uint32_t w25_Read_ID(void){
 	return (dt[0] << 16 | dt[1] << 8) | dt[2];
 }
 void w25_Init(void){
-	HAL_Delay(100);
+	delay_ms(100);
 	w25_Reset();
-	HAL_Delay(100);
+	delay_ms(100);
 	unsigned int ID = w25_Read_ID();
 	HAL_UART_Transmit(&huart1,(uint8_t*)"\r\n",2,0x1000);
 	 sprintf(str,"ID:0x%X\r\n", ID);
@@ -148,4 +152,15 @@ void w25_Init(void){
 	   sprintf(str,"Capacity: %u KB\r\n",(unsigned int)w25_info.NumKB);
 	   HAL_UART_Transmit(&huart1,(uint8_t*)str,strlen(str),0x1000);
 
+}
+
+
+static void delay_ms(uint16_t delay){
+	time = HAL_GetTick();
+		while(timeFlag == 0){
+			if((HAL_GetTick() - time) > delay){
+				timeFlag = 1;
+			}
+		}
+		timeFlag = 0;
 }
