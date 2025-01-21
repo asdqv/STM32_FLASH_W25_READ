@@ -9,6 +9,7 @@
 #define w25_ENABLE_RESET	0x66
 #define w25_RESET			0x99
 #define w25_READ			0x03
+#define w25_FAST_READ		0x0b
 #define w25_GET_JDEC_ID		0x9f
 //макросы для управления ножкой выбора NSS
 #define cs_set()	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET) //chip select, если ножка в низом уровне, отклик ведомого устройства разрешен, если в высоком, то запрещен
@@ -31,6 +32,7 @@ typedef struct
   uint8_t   SR1;
   uint8_t   SR2;
   uint8_t   SR3;
+  uint8_t high_cap; //если обьем памяти 512 и больше, то аддресация 32 разрядная
 }w25_info_t;
 
 w25_info_t  w25_info;
@@ -54,14 +56,41 @@ void w25_Reset(void){
 	cs_reset();
 }
 //func для начала чтения из flash-ки записываем команду 03 и 24 битный аддрес
-void w25_Read_Data(uint32_t addr, uint8_t *dat, uint32_t sz){
+void w25_Read_Data(uint32_t addr, uint8_t *data, uint32_t size){
 	cs_set();
 	buf[0] = w25_READ;
 	buf[1] = (addr >> 16) & 0xFF;
 	buf[2] = (addr >> 8) & 0xFF;
 	buf[3] = addr & 0xFF;
 	SPI1_Send(buf, 4);
-	SPI1_Recv(dat, sz);
+	SPI1_Recv(data, size);
+	cs_reset();
+}
+// func для чтения всей страницы
+void w25_Read_Page(uint8_t* data, uint32_t page_addr, uint32_t offset, uint32_t size){
+	if(size > w25_info.PageSize) // защита, смотрим чтобы размер не превышал страницу
+		size = w25_info.PageSize;
+	if((offset + size) > w25_info.PageSize) //второй уровень защиты, не превышает ли смещение максимальный addr
+		size = w25_info.PageSize - offset;
+	page_addr = page_addr * w25_info.PageSize + offset; //в байтах
+	//fast read
+	buf[0] = w25_FAST_READ;
+	if(w25_info.high_cap){
+		buf[1] = (page_addr >> 24) & 0xFF;
+		buf[2] = (page_addr >> 16) & 0xFF;
+		buf[3] = (page_addr >> 8) & 0xFF;
+		buf[4] = page_addr & 0xFF;
+		cs_set();
+		SPI1_Send(buf, 5);
+	}
+	else{
+		buf[1] = (page_addr >> 16) & 0xFF;
+		buf[2] = (page_addr >> 8) & 0xFF;
+		buf[3] = page_addr & 0xFF;
+		cs_set();
+		SPI1_Send(buf, 4);
+	}
+	SPI1_Recv(data, size);
 	cs_reset();
 }
 uint32_t w25_Read_ID(void){
@@ -82,13 +111,16 @@ void w25_Init(void){
 	 sprintf(str,"ID:0x%X\r\n", ID);
 	 HAL_UART_Transmit(&huart1,(uint8_t*)str,strlen(str),0x1000);
 	 ID &= 0x0000ffff; //маска отсечения manuf ID
+	 w25_info.high_cap = 0;
 	 switch(ID)
 	  {
 	    case 0x401A:
+	      w25_info.high_cap = 1;
 	      w25_info.BlockCount=1024;
 	      sprintf(str,"w25qxx Chip: w25q512\r\n");
 	      break;
 	    case 0x4019:
+	      w25_info.high_cap = 1;
 	      w25_info.BlockCount=512;
 	      sprintf(str,"w25qxx Chip: w25q256\r\n");
 	      break;
@@ -129,7 +161,6 @@ void w25_Init(void){
 	      HAL_UART_Transmit(&huart1,(uint8_t*)str,strlen(str),0x1000);
 	      return;
 	  }
-	  HAL_UART_Transmit(&huart1,(uint8_t*)str,strlen(str),0x1000);
 	  HAL_UART_Transmit(&huart1,(uint8_t*)str,strlen(str),0x1000);
 	   w25_info.PageSize=256;
 	   w25_info.SectorSize=0x1000;

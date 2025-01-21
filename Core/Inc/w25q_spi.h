@@ -17,6 +17,7 @@ void SPI1_Send(uint8_t *dt, uint16_t cnt);
 void SPI1_Recv(uint8_t *dt, uint16_t cnt);
 void w25_Reset(void);
 void w25_Read_Data(uint32_t addr, uint8_t *dat, uint32_t sz);
+void w25_Read_Page(uint8_t* data, uint32_t page_addr, uint32_t offset, uint32_t size);
 uint32_t w25_Read_ID(void);
 void w25_Init(void);
 

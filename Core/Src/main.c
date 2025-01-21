@@ -99,9 +99,11 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   w25_Init();
+
   for(uint16_t k=0; k<4; k++) //читаем первые 4 страницы
     {
-	  w25_Read_Data(k*256, rx_buf, 256);
+	  //w25_Read_Data(k*256, rx_buf, 256);
+	  w25_Read_Page(rx_buf, k, 0, 256);
       for(uint8_t i=0; i<16; i++)
       {
         addr = k*256 + i*16;
@@ -126,6 +128,7 @@ int main(void)
       }
       HAL_UART_Transmit(&huart1,(uint8_t*)"\r\n",2,0x1000);
     }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
