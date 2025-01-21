@@ -37,11 +37,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  00017250  00000000  00000000  00010055  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000a27b  00000000  00000000  000272a5  2**0
+ 17 .debug_line   0000a27c  00000000  00000000  000272a5  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00083b6a  00000000  00000000  00031520  2**0
+ 18 .debug_str    00083b6a  00000000  00000000  00031521  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000b508a  2**0
+ 19 .comment      00000043  00000000  00000000  000b508b  2**0
                   CONTENTS, READONLY
  20 .debug_frame  000025d4  00000000  00000000  000b50d0  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -1093,9 +1093,9 @@ void w25_Reset(void){
  8000634:	200001c0 	.word	0x200001c0
 
 08000638 <w25_Read_ID>:
-	buf[2] = (addr >> 8) & 0xFF;
 	buf[3] = addr & 0xFF;
-	SPI1_Send(dat, sz);
+	SPI1_Send(buf, 4);
+	SPI1_Recv(dat, sz);
 	cs_reset();
 }
 uint32_t w25_Read_ID(void){
