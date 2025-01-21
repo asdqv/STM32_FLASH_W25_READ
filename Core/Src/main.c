@@ -73,6 +73,8 @@ static void MX_USART1_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	char str[30];
+	unsigned int addr = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -97,6 +99,33 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   w25_Init();
+  for(uint16_t k=0; k<4; k++) //читаем первые 4 страницы
+    {
+	  w25_Read_Data(k*256, rx_buf, 256);
+      for(uint8_t i=0; i<16; i++)
+      {
+        addr = k*256 + i*16;
+        sprintf(str,"%08X: ", addr);
+        HAL_UART_Transmit(&huart1,(uint8_t*)str,10,0x1000);
+        for(uint8_t j=0; j<16; j++)
+        {
+          sprintf(str,"%02X", rx_buf[(uint16_t)i*16 + (uint16_t)j]);
+          HAL_UART_Transmit(&huart1,(uint8_t*)str,2,0x1000);
+          if(j==7) HAL_UART_Transmit(&huart1,(uint8_t*)"|",1,0x1000);
+          else HAL_UART_Transmit(&huart1,(uint8_t*)" ",1,0x1000);
+        }
+        HAL_UART_Transmit(&huart1,(uint8_t*)"| ",1,0x1000);
+        for(uint8_t j=0; j<16; j++)
+        {
+          if ((rx_buf[(uint16_t)i*16 + (uint16_t)j] == 0x0A) ||
+              (rx_buf[(uint16_t)i*16 + (uint16_t)j] == 0x0D)) sprintf(str," ");
+          else sprintf(str,"%c", (char) rx_buf[(uint16_t)i*16 + (uint16_t)j]);
+          HAL_UART_Transmit(&huart1,(uint8_t*)str,1,0x1000);
+        }
+        HAL_UART_Transmit(&huart1,(uint8_t*)"\r\n",2,0x1000);
+      }
+      HAL_UART_Transmit(&huart1,(uint8_t*)"\r\n",2,0x1000);
+    }
   /* USER CODE END 2 */
 
   /* Infinite loop */
